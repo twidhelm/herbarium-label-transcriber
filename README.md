@@ -51,20 +51,20 @@ After installing requirements, you can test the script using the provided exampl
 
    **Option A — Copy example files into expected locations**:
    ```bash
-   cp examples/sample_labels/test_label.jpg images/
+   cp examples/sample_labels/NEB00092773.jpg images/
    cp examples/NewUploadTemplateForCollectors.xlsx .
-   python transcribe_all_jpeg_v1.0.py
+   python herbarium-label-transcriber_v1.0.py
    ```
 
    **Option B — Point script directly to examples**  
-   Edit the constants at the top of `transcribe_all_jpeg_v1.0.py`:
+   Edit the constants at the top of `herbarium-label-transcriber_v1.0.py`:
    ```python
    IMAGE_FOLDER = "examples/sample_labels"
    TEMPLATE_PATH = "examples/NewUploadTemplateForCollectors.xlsx"
    ```
    Then run:
    ```bash
-   python transcribe_all_jpeg_v1.0.py
+   python herbarium-label-transcriber_v1.0.py
    ```
 
 3. **Check the output**  
@@ -81,10 +81,17 @@ If you have your SSH key set up with GitHub, you can clone this repository with:
 
 ```bash
 git clone git@github.com:twidhelm/herbarium-label-transcriber.git
+```
 
 ---
 
 ## Set up your OpenAI API key
+
+Copy `.env.example` to `.env` and fill in your API key:
+
+```bash
+cp .env.example .env
+# Then edit .env to add your real key
 
 Create a file named `.env` in the project root:
 
@@ -114,7 +121,7 @@ The script preserves these two rows when writing output.
 Use your file’s actual name. If you rename your script to `transcribe_all.py`, use that instead.
 
 ```bash
-python transcribe_all_jpeg_v1.0.py
+python herbarium-label-transcriber_v1.0.py
 ```
 
 When it’s done, you’ll see:
@@ -165,7 +172,7 @@ MODEL = "gpt-4o"                              # OpenAI model name
 1. Place 10 label photos in `images/`
 2. Put `NewUploadTemplateForCollectors.xlsx` in the repo root
 3. Create `.env` with your `OPENAI_API_KEY`
-4. Run `python transcribe_all_jpeg_v1.0.py`
+4. Run `python herbarium-label-transcriber_v1.0.py`
 5. Open `Symbiota_Transcriptions_Output.xlsx` and verify fields
 
 ---

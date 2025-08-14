@@ -1,6 +1,6 @@
 # Herbarium Label Transcriber
 
-Batch‑transcribe herbarium label **JPEG** images into a **Symbiota‑ready Excel** file using the OpenAI API.  
+Batch-transcribe herbarium label **JPEG** images into a **Symbiota-ready Excel** file using the OpenAI API.  
 Optimized for NEB (Bessey Herbarium) workflows with a Symbiota template that keeps **row 1 = headers** and **row 2 = field descriptions**.
 
 ---
@@ -9,11 +9,11 @@ Optimized for NEB (Bessey Herbarium) workflows with a Symbiota template that kee
 
 - Reads **all `.jpg`/`.jpeg` images** from a folder (default: `images/`)
 - Uses **OpenAI GPT** to extract structured fields from the label text
-- Adds some **rule‑based cleanups** (e.g., NEB catalog numbers, coordinates conversion)
+- Adds some **rule-based cleanups** (e.g., NEB catalog numbers, coordinates conversion)
 - Preserves the **first two rows** from your Symbiota template (headers + descriptions)
 - Writes results to an Excel file (default: `Symbiota_Transcriptions_Output.xlsx`)
 
-> The script currently expects GPT to return a Python‑dict‑like block; it parses that and fills Symbiota columns, plus a few convenience columns such as `rawGPTOutput` and the three scientific name variants (`sciname`, `scientificname`, `scientificNameAuthorship`).
+> The script currently expects GPT to return a Python-dict-like block; it parses that and fills Symbiota columns, plus a few convenience columns such as `rawGPTOutput` and the three scientific name variants (`sciname`, `scientificname`, `scientificNameAuthorship`).
 
 ---
 
@@ -32,6 +32,47 @@ git clone https://github.com/YOUR-USERNAME/herbarium-label-transcriber.git
 cd herbarium-label-transcriber
 pip install -r requirements.txt
 ```
+
+---
+
+## Quick Start (with included examples)
+
+After installing requirements, you can test the script using the provided example files.
+
+1. **Add your OpenAI API key**  
+   Create a `.env` file in the project root containing:
+   ```
+   OPENAI_API_KEY=your_api_key_here
+   ```
+
+2. **Run with examples**  
+   The script defaults to looking for images in `images/` and a template in the project root.  
+   For the examples, either:
+
+   **Option A — Copy example files into expected locations**:
+   ```bash
+   cp examples/sample_labels/test_label.jpg images/
+   cp examples/NewUploadTemplateForCollectors.xlsx .
+   python transcribe_all_jpeg_v1.0.py
+   ```
+
+   **Option B — Point script directly to examples**  
+   Edit the constants at the top of `transcribe_all_jpeg_v1.0.py`:
+   ```python
+   IMAGE_FOLDER = "examples/sample_labels"
+   TEMPLATE_PATH = "examples/NewUploadTemplateForCollectors.xlsx"
+   ```
+   Then run:
+   ```bash
+   python transcribe_all_jpeg_v1.0.py
+   ```
+
+3. **Check the output**  
+   When finished, the script will create:
+   ```
+   Symbiota_Transcriptions_Output.xlsx
+   ```
+   in the project root, containing the parsed label data from the example image.
 
 ---
 
@@ -93,7 +134,7 @@ MODEL = "gpt-4o"                              # OpenAI model name
 
 ## What gets parsed & cleaned
 
-- **NEB catalog numbers**: finds a 6‑digit number (starting 3–9) and writes to  
+- **NEB catalog numbers**: finds a 6-digit number (starting 3–9) and writes to  
   `otherCatalogNumbers` as `NEB Catalog #: 3xxxxx`
 - **Coordinates**: detects DMS (e.g., `41°...N 96°...W`) and converts to decimal degrees; also handles decimal forms when present, filling `verbatimLatitude` and `verbatimLongitude`
 - **Catalog number from filename**: adds the filename (without extension) to `catalogNumber`
@@ -130,7 +171,7 @@ MODEL = "gpt-4o"                              # OpenAI model name
 - **Template read error**  
   Check `TEMPLATE_PATH` and verify the file is a valid `.xlsx`
 - **Parsed fields missing**  
-  See `rawGPTOutput` column to inspect the model’s raw response; adjust prompt or post‑processing rules as needed
+  See `rawGPTOutput` column to inspect the model’s raw response; adjust prompt or post-processing rules as needed
 
 ---
 

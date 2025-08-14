@@ -76,6 +76,14 @@ After installing requirements, you can test the script using the provided exampl
 
 ---
 
+### Cloning the Repository (SSH)
+If you have your SSH key set up with GitHub, you can clone this repository with:
+
+```bash
+git clone git@github.com:twidhelm/herbarium-label-transcriber.git
+
+---
+
 ## Set up your OpenAI API key
 
 Create a file named `.env` in the project root:

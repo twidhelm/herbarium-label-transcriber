@@ -1,0 +1,33 @@
+# Python cache and build files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.env
+.venv
+venv/
+env/
+pip-wheel-metadata/
+pytest_cache/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Data & outputs
+images/
+*.xlsx
+*.csv
+*.log
+*.tmp
+tmp/

@@ -1,166 +1,147 @@
 # Herbarium Label Transcriber
 
-Batch-transcribe herbarium label images (JPEG/PNG) into a Symbiota-ready Excel file.  
-Optimized for NEB (Bessey Herbarium) workflows using the `transcribe_all.py` script.
+Batch‑transcribe herbarium label **JPEG** images into a **Symbiota‑ready Excel** file using the OpenAI API.  
+Optimized for NEB (Bessey Herbarium) workflows with a Symbiota template that keeps **row 1 = headers** and **row 2 = field descriptions**.
 
 ---
 
-## Why?
+## What this does
 
-Turn hundreds of label photos into clean spreadsheet rows you can import into Symbiota — with opinionated parsing rules tailored to herbarium data and NEB conventions.
+- Reads **all `.jpg`/`.jpeg` images** from a folder (default: `images/`)
+- Uses **OpenAI GPT** to extract structured fields from the label text
+- Adds some **rule‑based cleanups** (e.g., NEB catalog numbers, coordinates conversion)
+- Preserves the **first two rows** from your Symbiota template (headers + descriptions)
+- Writes results to an Excel file (default: `Symbiota_Transcriptions_Output.xlsx`)
+
+> The script currently expects GPT to return a Python‑dict‑like block; it parses that and fills Symbiota columns, plus a few convenience columns such as `rawGPTOutput` and the three scientific name variants (`sciname`, `scientificname`, `scientificNameAuthorship`).
 
 ---
 
-## Key Features
+## Requirements
 
-- Extracts **six-digit handwritten NEB catalog numbers** → `otherCatalogNumbers` (e.g., `NEB Catalog #: 322401`)
-- Parses **geographic coordinates** (if present) → `verbatimLatitude`, `verbatimLongitude`
-- Detects **elevation** → `verbatimElevation`
-- Sends **substrate phrases starting with “On …”** → `substrate` (instead of `habitat`)
-- Handles **“Collected by X for Y & Z”** → `collector = X`; `occurrenceRemarks = "for Y & Z"`
-- Normalizes **country names** to `"United States"` for U.S. specimens
-- Improves capture of **`collectorNumber`**
-- Outputs all three scientific-name fields:
-  - `sciname` – scientific name **without** author
-  - `scientificname` – full scientific name **with** authorship
-  - `scientificNameAuthorship` – author name only
-- Writes directly to a **Symbiota Excel template** (headers in row 1, field descriptions in row 2, data starting row 3)
+- Python 3.10+
+- Packages (see `requirements.txt`):
+  - `openai`, `pandas`, `tqdm`, `python-dotenv`
 
 ---
 
 ## Installation
 
-### 1️⃣ Clone & Install Python Dependencies
 ```bash
 git clone https://github.com/YOUR-USERNAME/herbarium-label-transcriber.git
 cd herbarium-label-transcriber
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Install Tesseract OCR
+---
 
-This script uses [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) via the `pytesseract` wrapper.  
-You must install Tesseract separately:
+## Set up your OpenAI API key
 
-- **macOS (Homebrew)**  
-  ```bash
-  brew install tesseract
-  ```
-- **Ubuntu/Debian**  
-  ```bash
-  sudo apt-get update && sudo apt-get install -y tesseract-ocr
-  ```
-- **Windows**  
-  1. Download and install from [UB Mannheim builds](https://github.com/UB-Mannheim/tesseract/wiki)  
-  2. Add the install folder (e.g., `C:\Program Files\Tesseract-OCR`) to your PATH, or pass `--tesseract-path` when running
+Create a file named `.env` in the project root:
 
-Optional: install extra language packs if you work with labels in non-English languages.
+```
+OPENAI_API_KEY=your_api_key_here
+```
+
+The script uses `python-dotenv` to load this automatically.
 
 ---
 
-## Quick Start
+## Prepare your inputs
+
+- Put your label images in: `images/` (you can change this; see **Configuration** below)
+- Put your Symbiota Excel template in the repo root and name it:
+  - `NewUploadTemplateForCollectors.xlsx` (default expected by the script)
+
+**Template assumptions**
+- Row 1: column headers
+- Row 2: field descriptions  
+The script preserves these two rows when writing output.
+
+---
+
+## Run it
+
+Use your file’s actual name. If you rename your script to `transcribe_all.py`, use that instead.
 
 ```bash
-python transcribe_all.py \
-  --input ./examples/sample_labels \
-  --output ./examples/sample_output.xlsx
+python transcribe_all_jpeg_v1.0.py
+```
+
+When it’s done, you’ll see:
+
+```
+✅ Done. Transcriptions saved to Symbiota_Transcriptions_Output.xlsx
 ```
 
 ---
 
-## Usage
+## Configuration (edit at the top of the script)
 
-```bash
-python transcribe_all.py --input INPUT_DIR --output OUTPUT_XLSX [options]
+Open the script and adjust these constants to your preference:
+
+```python
+IMAGE_FOLDER = "images"                       # Where your .jpg/.jpeg files are
+TEMPLATE_PATH = "NewUploadTemplateForCollectors.xlsx"  # Your Symbiota template
+OUTPUT_PATH = "Symbiota_Transcriptions_Output.xlsx"    # Where to write results
+MODEL = "gpt-4o"                              # OpenAI model name
 ```
 
-**Required:**
-- `--input` — folder containing label images (`.jpg`, `.jpeg`, `.png`)
-- `--output` — Excel file to write (e.g., `results.xlsx`)
-
-**Common Options:**
-- `--tesseract-path PATH` — explicit path to Tesseract binary
-- `--languages LANGS` — Tesseract language codes (default: `eng`)
-- `--dpi N` — override/assume DPI for OCR preprocessing (e.g., `300`)
-- `--threads N` — number of parallel workers (e.g., `4` or `auto`)
-- `--limit N` — process at most N images (for testing)
-- `--verbose` — print debug info for parsing
-- `--skip-existing` — skip images already in the output file
+> The script currently processes only `.jpg`/`.jpeg`. Add `".png"` to the filter if needed.
 
 ---
 
-## Output Schema (Symbiota Columns)
+## What gets parsed & cleaned
 
-The generated Excel file matches Symbiota’s template:
+- **NEB catalog numbers**: finds a 6‑digit number (starting 3–9) and writes to  
+  `otherCatalogNumbers` as `NEB Catalog #: 3xxxxx`
+- **Coordinates**: detects DMS (e.g., `41°...N 96°...W`) and converts to decimal degrees; also handles decimal forms when present, filling `verbatimLatitude` and `verbatimLongitude`
+- **Catalog number from filename**: adds the filename (without extension) to `catalogNumber`
+- **Raw GPT output**: stored in `rawGPTOutput` for auditing
+- **Scientific names**: ensures `sciname`, `scientificname`, `scientificNameAuthorship` columns exist in the output
 
-- **Row 1:** Column headers
-- **Row 2:** Field descriptions
-- **Row 3+:** Data
-
-**Notable fields:**
-- `sciname` — no author
-- `scientificname` — full name + authorship
-- `scientificNameAuthorship` — author only
-- `otherCatalogNumbers` — e.g., `NEB Catalog #: 322401`
-- `verbatimLatitude`, `verbatimLongitude` — decimal degrees or verbatim
-- `verbatimElevation`
-- `substrate` — “On …” phrases
-- `occurrenceRemarks` — e.g., “for Y & Z”
-- `collector`, `collectorNumber`
-- `country` — normalized to `United States` when applicable
+> If GPT output can’t be parsed as a dict, the script falls back to dumping the model’s text into `occurrenceRemarks` so you don’t lose information.
 
 ---
 
-## Example Repo Structure
+## Output
 
-```
-herbarium-label-transcriber/
-├── transcribe_all.py
-├── requirements.txt
-├── README.md
-├── LICENSE
-├── .gitignore
-├── data/                   # optional reference data
-├── examples/
-│   ├── sample_labels/      # sample JPEG/PNG labels
-│   └── sample_output.xlsx  # example Symbiota-formatted output
-└── tests/
-    └── test_transcribe.py  # optional tests
-```
+- An Excel file (default: `Symbiota_Transcriptions_Output.xlsx`)
+- First two rows are copied from your template; data begin at row 3
 
 ---
 
-## Testing
+## Example workflow
 
-- Add images to `examples/sample_labels/`
-- Run the Quick Start example above
-- (Optional) Create unit tests mapping OCR text → expected parsed fields
+1. Place 10 label photos in `images/`
+2. Put `NewUploadTemplateForCollectors.xlsx` in the repo root
+3. Create `.env` with your `OPENAI_API_KEY`
+4. Run `python transcribe_all_jpeg_v1.0.py`
+5. Open `Symbiota_Transcriptions_Output.xlsx` and verify fields
 
 ---
 
 ## Troubleshooting
 
-- **`tesseract: not found`** — install Tesseract and/or pass `--tesseract-path`
-- **Poor handwriting OCR** — improve image resolution/lighting or add handwriting-specific models
-- **Excel won’t import** — ensure rows 1–2 match Symbiota template (this script sets them automatically)
+- **OpenAI authentication error**  
+  Ensure `.env` exists and contains `OPENAI_API_KEY=...`
+- **No images found**  
+  Confirm your files end with `.jpg` or `.jpeg` and `IMAGE_FOLDER` is correct
+- **Template read error**  
+  Check `TEMPLATE_PATH` and verify the file is a valid `.xlsx`
+- **Parsed fields missing**  
+  See `rawGPTOutput` column to inspect the model’s raw response; adjust prompt or post‑processing rules as needed
 
 ---
 
 ## Contributing
 
-Pull requests welcome! Please:
-1. Open an issue describing your change
-2. Add/adjust tests for parsing rules
-3. Keep the README updated
+- Open an issue describing your change
+- Keep README in sync with script behavior
+- (Optional) add tests for parsing rules
 
 ---
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE)
-
----
-
-## Acknowledgments
-
-Built for the Bessey Herbarium (NEB) data curation workflow and Symbiota import conventions.
+MIT — see `LICENSE`.
